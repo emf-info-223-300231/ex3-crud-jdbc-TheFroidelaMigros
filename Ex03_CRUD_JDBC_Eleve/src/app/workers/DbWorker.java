@@ -90,4 +90,13 @@ public class DbWorker implements DbWorkerItf {
 
     }
 
+    Personne lire(int lastPK) {
+    }
+
+    void modifier(Personne p1) {
+    }
+
+    void effacer(Personne p) {
+    }
+
 }
