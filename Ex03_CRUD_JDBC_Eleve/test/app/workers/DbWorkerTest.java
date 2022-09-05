@@ -3,6 +3,7 @@ package app.workers;
 import app.beans.Personne;
 import app.exceptions.MyDBException;
 import app.helpers.SystemLib;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
@@ -43,7 +44,7 @@ public class DbWorkerTest {
   public void b_testerLirePersonnes() throws MyDBException {
     System.out.println(SystemLib.getCurrentMethod());
     List<Personne> personnes = dbWrk.lirePersonnes();
-    manPers.setPersonnes(personnes);
+    manPers.setPersonnes((ArrayList<Personne>) personnes);
     boolean ok = !personnes.isEmpty();
     if (ok) {
       int cnt = 0;

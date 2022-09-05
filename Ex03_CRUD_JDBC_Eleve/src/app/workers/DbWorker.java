@@ -28,7 +28,7 @@ public class DbWorker implements DbWorkerItf {
     public void connecterBdMySQL(String nomDB) throws MyDBException {
         final String url_local = "jdbc:mysql://localhost:3306/" + nomDB;
         final String url_remote = "jdbc:mysql://LAPEMFB37-21.edu.net.fr.ch:3306/" + nomDB;
-        final String user = "root";
+        final String user = "223";
         final String password = "emf123";
 
         System.out.println("url:" + url_remote);
@@ -80,7 +80,7 @@ public class DbWorker implements DbWorkerItf {
         try {
             Statement st = dbConnexion.createStatement();
             ResultSet rs = st.executeQuery("select PK_PERS, Prenom, Nom, Date_naissance, No_rue, Rue, NPA, Ville, Actif, Salaire, date_modif from t_personne");
-            while (rs.next()){
+            while (rs.next()) {
                 int pk = rs.getInt("PK_PERS");
                 String nom = rs.getString("Nom");
                 String prenom = rs.getString("Prenom");
@@ -95,8 +95,8 @@ public class DbWorker implements DbWorkerItf {
                 Personne pers = new Personne(pk, nom, prenom, dateNaissance, noRue, rue, npa, ville, actif, salaire, dateModif);
                 listePersonnes.add(pers);
             }
-        } catch (SQLException ex) {
-            Logger.getLogger(DbWorker.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (SQLException | NullPointerException ex) {
+            throw new MyDBException(SystemLib.getFullMethodName(), ex.getMessage());
         }
         return listePersonnes;
     }
@@ -109,23 +109,24 @@ public class DbWorker implements DbWorkerItf {
     @Override
     public void modifier(Personne p1) throws MyDBException {
         String prep = "update t_personne set Prenom=?, Nom=?, Date_naissance=?, No_rue=?, Rue=?, NPA=?, Ville=?, Actif=?, Salaire=?, date_modif=? where PK_PERS=?";
-        try (PreparedStatement ps= dbConnexion.prepareStatement(prep)){
+        try ( PreparedStatement ps = dbConnexion.prepareStatement(prep)) {
             ps.setString(1, p1.getPrenom());
             ps.setString(2, p1.getNom());
-            ps.setDate(3, DateTimeLib.stringToSqldate(p1.getDateNaissance().toString()));
+            ps.setDate(3, new java.sql.Date(p1.getDateNaissance().getTime()));
             ps.setInt(4, p1.getNoRue());
             ps.setString(5, p1.getRue());
             ps.setInt(6, p1.getNpa());
             ps.setString(7, p1.getLocalite());
             ps.setBoolean(8, p1.isActif());
             ps.setDouble(9, p1.getSalaire());
-            ps.setDate(10, DateTimeLib.stringToSqldate(p1.getDateModif().toString()));
+            ps.setTimestamp(10, new Timestamp(p1.getDateModif().getTime()));
+            ps.setInt(11, p1.getPkPers());
             int nb = ps.executeUpdate();
-            if(nb != 1 ) {
-                throw new MyDBException("modifier", "Erreur de mise à jour");
+            if (nb != 1) {
+                throw new MyDBException(SystemLib.getFullMethodName(), "Erreur de mise à jour");
             }
-        } catch (SQLException ex) {
-            
+        } catch (SQLException | NullPointerException ex) {
+            throw new MyDBException(SystemLib.getFullMethodName(), ex.getMessage());
         }
     }
 
@@ -133,35 +134,39 @@ public class DbWorker implements DbWorkerItf {
     public void effacer(Personne p) throws MyDBException {
         //String prep = "DELETE from t_personne where PK_PERS=" + p.getPkPers();
         String prep = "DELETE from t_personne where PK_PERS=?";
-        try (PreparedStatement ps = dbConnexion.prepareStatement(prep)){
+        try ( PreparedStatement ps = dbConnexion.prepareStatement(prep)) {
             ps.setInt(1, p.getPkPers());
             int nb = ps.executeUpdate();
-            if(nb != 1){
+            if (nb != 1) {
                 throw new MyDBException("effacer", "Erreur de suppression");
             }
-        } catch (SQLException ex) {
-            
+        } catch (SQLException | NullPointerException ex) {
+            throw new MyDBException(SystemLib.getFullMethodName(), ex.getMessage());
         }
     }
 
     @Override
-    public void creer(Personne federer) {
-        String prep = "INSERT INTO t_personne VALUES (PK_PERS, Prenom, Nom, Date_naissance, No_rue, Rue, NPA, Ville, Actif, Salaire, date_modif) "
-                    + "VALUES (? , '?' , '?' , '?' , ? , '?' , ? , '?' , ? , ? , '?') ";
-        try (PreparedStatement ps= dbConnexion.prepareStatement(prep)){
-            ps.setInt(1, federer.getPkPers());
-            ps.setString(2, federer.getPrenom());
-            ps.setString(3, federer.getNom());
-            ps.setDate(4, DateTimeLib.stringToSqldate(federer.getDateNaissance().toString()));
-            ps.setInt(5, federer.getNoRue());
-            ps.setString(6, federer.getRue());
-            ps.setInt(7, federer.getNpa());
-            ps.setString(8, federer.getLocalite());
-            ps.setBoolean(9, federer.isActif());
-            ps.setDouble(10, federer.getSalaire());
-            ps.setDate(11, DateTimeLib.stringToSqldate(federer.getDateModif().toString()));
-        } catch (SQLException ex) {
-            Logger.getLogger(DbWorker.class.getName()).log(Level.SEVERE, null, ex);
+    public void creer(Personne federer) throws MyDBException {
+        String prep = "INSERT INTO t_personne (Prenom, Nom, Date_naissance, No_rue, Rue, NPA, Ville, Actif, Salaire, date_modif) " + 
+                " VALUES (? , ? , ? , ? , ? , ? , ? , ? , ? , ?) ";
+
+        try ( PreparedStatement ps = dbConnexion.prepareStatement(prep)) {
+            ps.setString(1, federer.getPrenom());
+            ps.setString(2, federer.getNom());
+            ps.setDate(3, new java.sql.Date(federer.getDateNaissance().getTime()));
+            ps.setInt(4, federer.getNoRue());
+            ps.setString(5, federer.getRue());
+            ps.setInt(6, federer.getNpa());
+            ps.setString(7, federer.getLocalite());
+            ps.setBoolean(8, federer.isActif());
+            ps.setDouble(9, federer.getSalaire());
+            ps.setTimestamp(10, new Timestamp(federer.getDateModif().getTime()));
+            int nb = ps.executeUpdate();
+            if (nb != 1) {
+                throw new MyDBException("effacer", "Erreur de suppression");
+            }
+        } catch (SQLException | NullPointerException ex) {
+            throw new MyDBException(SystemLib.getFullMethodName(), ex.getMessage());
         }
     }
 

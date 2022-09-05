@@ -28,10 +28,11 @@ public class PersonneManager {
     
     public Personne finPersonne(){
         int t = listePersonnes.size();
-        return listePersonnes.get(t);
+        return listePersonnes.get(t - 1);
     }
     
     public Personne precedentPersonne(){
+        
         if(index >=1){
             index --;
         }
@@ -39,6 +40,7 @@ public class PersonneManager {
     }
     
     public Personne setPersonnes (ArrayList<Personne> listePersonnes){
+        this.listePersonnes = listePersonnes;
         return listePersonnes.get(index);
     }
     
