@@ -147,8 +147,8 @@ public class DbWorker implements DbWorkerItf {
 
     @Override
     public void creer(Personne federer) throws MyDBException {
-        String prep = "INSERT INTO t_personne (Prenom, Nom, Date_naissance, No_rue, Rue, NPA, Ville, Actif, Salaire, date_modif) " + 
-                " VALUES (? , ? , ? , ? , ? , ? , ? , ? , ? , ?) ";
+        String prep = "INSERT INTO t_personne (Prenom, Nom, Date_naissance, No_rue, Rue, NPA, Ville, Actif, Salaire, date_modif) "
+                + " VALUES (? , ? , ? , ? , ? , ? , ? , ? , ? , ?) ";
 
         try ( PreparedStatement ps = dbConnexion.prepareStatement(prep)) {
             ps.setString(1, federer.getPrenom());

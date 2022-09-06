@@ -19,6 +19,9 @@ public class PersonneManager {
     
     
     public Personne courantPersonne(){
+        if(index >= listePersonnes.size()){
+            index = index - 1;
+        }
         return listePersonnes.get(index);
     }
     
@@ -32,7 +35,6 @@ public class PersonneManager {
     }
     
     public Personne precedentPersonne(){
-        
         if(index >=1){
             index --;
         }
