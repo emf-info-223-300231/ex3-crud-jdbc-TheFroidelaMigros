@@ -83,7 +83,6 @@ public class MainCtrl implements Initializable {
         manPers = new PersonneManager();
         ouvrirDB();
         rendreVisibleBoutonsDepl(true);
-
     }
 
     @FXML
@@ -93,7 +92,11 @@ public class MainCtrl implements Initializable {
 
     @FXML
     public void actionNext(ActionEvent event) {
-        afficherPersonne(manPers.suivantPersonne());
+        try {
+            afficherPersonne(manPers.suivantPersonne());
+        } catch (Exception e) {
+            JfxPopup.displayError("ERREUR", "C'est la dernière personne de la db", e.getMessage());
+        }
     }
 
     @FXML
@@ -108,9 +111,9 @@ public class MainCtrl implements Initializable {
 
     @FXML
     private void menuAjouter(ActionEvent event) throws MyDBException {
+        modeAjout = true;
         rendreVisibleBoutonsDepl(false);
         effacerContenuChamps();
-        modeAjout = true;
     }
 
     @FXML
@@ -120,22 +123,23 @@ public class MainCtrl implements Initializable {
     }
 
     @FXML
-    private void menuEffacer(ActionEvent event) throws MyDBException {
+    private void menuEffacer(ActionEvent event) {
         try {
-            dbWrk.effacer(manPers.courantPersonne());
-            manPers.setPersonnes((ArrayList<Personne>) dbWrk.lirePersonnes());
-            afficherPersonne(manPers.precedentPersonne());
+            dbWrk.effacer(manPers.courantPersonne());   // effacer la personne courante de la DB
+            manPers.setPersonnes((ArrayList<Personne>) dbWrk.lirePersonnes());  // mise à jour de la liste manPers
+            afficherPersonne(manPers.precedentPersonne());  // re afficher une personne
         } catch (MyDBException e) {
+            JfxPopup.displayError("Erreur", "Erreur de suppression", "Erreur lors de la suppression");
         }
     }
 
     @FXML
-    private void menuQuitter(ActionEvent event) throws MyDBException {
+    private void menuQuitter(ActionEvent event) {
         quitter();
     }
 
     @FXML
-    private void annulerPersonne(ActionEvent event) throws MyDBException {
+    private void annulerPersonne(ActionEvent event) {
         rendreVisibleBoutonsDepl(true);
         afficherPersonne(manPers.precedentPersonne());
     }
@@ -144,18 +148,30 @@ public class MainCtrl implements Initializable {
     private void sauverPersonne(ActionEvent event) {
         int pk = -1;
         try {
-           pk = Integer.valueOf(txtPK.getText());
-        } catch(NumberFormatException ex ) {}
-       try {
-        Personne p = new Personne(pk, txtNom.getText(), txtPrenom.getText(), java.sql.Date.valueOf(dateNaissance.getValue()), Integer.valueOf(txtNo.getText()), txtRue.getText(), Integer.valueOf(txtNPA.getText()), txtLocalite.getText(), Boolean.valueOf(ckbActif.getText()), Double.valueOf(txtSalaire.getText()), new Date());
-        if (modeAjout == true) {
-            dbWrk.creer(p);
-        } else if (modeAjout == false) {
-            dbWrk.modifier(p);
+            pk = Integer.valueOf(txtPK.getText());  // récuperation de la PK de l'ihm
+        } catch (NumberFormatException ex) {
         }
-       } catch (MyDBException ex ){
-           JfxPopup.displayError("ERREUR", "Une erreur s'est produite", ex.getMessage());
-       }
+        // Creation d'une personne avec les infos des textBox
+        Personne p = new Personne(pk, txtNom.getText(), txtPrenom.getText(), java.sql.Date.valueOf(dateNaissance.getValue()), Integer.valueOf(txtNo.getText()), txtRue.getText(), Integer.valueOf(txtNPA.getText()), txtLocalite.getText(), Boolean.valueOf(ckbActif.getText()), Double.valueOf(txtSalaire.getText()), new Date());
+                
+        // Si true Ajout de personne
+        if (modeAjout == true) {
+            try {
+                dbWrk.creer(p);
+                manPers.setPersonnes((ArrayList<Personne>) dbWrk.lirePersonnes());
+            } catch (MyDBException ex) {
+                JfxPopup.displayError("ERREUR", "Une erreur s'est produite", ex.getMessage());
+            }
+
+        // Si false modification de personne
+        } else if (modeAjout == false) {
+            try {
+                dbWrk.modifier(p);
+                manPers.setPersonnes((ArrayList<Personne>) dbWrk.lirePersonnes());
+            } catch (MyDBException e) {
+                JfxPopup.displayError("ERREUR", "Une erreur s'est produite", e.getMessage());
+            }
+        }
         rendreVisibleBoutonsDepl(true);
     }
 
